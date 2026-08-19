@@ -77,20 +77,39 @@
   }
 
   /* ---------------------------------------------------------------------
-   * HERO DECORATIVE MARK — gentle parallax on mouse move (desktop only)
+   * PARALLAX — camadas de imagem das seções
    * -------------------------------------------------------------------*/
-  const mark = document.querySelector(".justice-mark");
-  if (mark && window.matchMedia("(pointer:fine)").matches) {
-    const heroSection = document.querySelector(".hero");
-    heroSection.addEventListener("mousemove", (e) => {
-      const { innerWidth: w, innerHeight: h } = window;
-      const x = (e.clientX / w - 0.5) * 10;
-      const y = (e.clientY / h - 0.5) * 6;
-      mark.style.transform = `translate(${x}px, ${y}px)`;
-    });
-    heroSection.addEventListener("mouseleave", () => {
-      mark.style.transform = "translate(0,0)";
-    });
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const layers = [
+    { el: document.querySelector(".hero-media"), speed: 0.16 },
+    { el: document.querySelector(".problema-media"), speed: 0.1 },
+    { el: document.querySelector(".faixa-media"), speed: 0.14 },
+    { el: document.querySelector(".autoridade-media"), speed: 0.08 },
+  ].filter((l) => l.el);
+
+  if (layers.length && !reduceMotion && window.matchMedia("(min-width: 861px)").matches) {
+    let ticking = false;
+    const update = () => {
+      const viewportH = window.innerHeight;
+      layers.forEach(({ el, speed }) => {
+        const section = el.parentElement;
+        const rect = section.getBoundingClientRect();
+        if (rect.bottom < -200 || rect.top > viewportH + 200) return;
+        // deslocamento relativo ao centro da viewport
+        const offset = (rect.top + rect.height / 2 - viewportH / 2) * speed;
+        el.style.transform = `translate3d(0, ${offset.toFixed(1)}px, 0)`;
+      });
+      ticking = false;
+    };
+    const onParallaxScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(update);
+      }
+    };
+    update();
+    window.addEventListener("scroll", onParallaxScroll, { passive: true });
+    window.addEventListener("resize", onParallaxScroll, { passive: true });
   }
 
   /* ---------------------------------------------------------------------
